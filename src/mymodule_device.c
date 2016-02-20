@@ -8,6 +8,10 @@
 #define KERNEL_SECTOR_SIZE 512
 #define hardsect_size 512
 
+/*
+ * Device Operations
+ */
+
 static void mydevice_transfer(struct mydevice *dev, sector_t sector, unsigned long nsect, char *buffer, int write) {
 	unsigned long offset = sector * hardsect_size;
 	unsigned long nbytes = nsect * hardsect_size;
@@ -42,14 +46,22 @@ static void mydevice_request(struct request_queue *q) {
 
 static int mydevice_getgeo(struct block_device * block_device, struct hd_geometry * geo) {
 	struct mydevice* dev = block_device->bd_disk->private_data;
-	/* We have no real geometry, of course, so make something up. */
-	int size = dev->size * (hardsect_size / KERNEL_SECTOR_SIZE);
-	geo->cylinders = (size & ~0x3f) >> 6;
+	/* Simulating some hd_geometry */
 	geo->heads = 4;
 	geo->sectors = 16;
+	geo->cylinders = ( dev->size * hardsect_size / KERNEL_SECTOR_SIZE ) / geo->sectors / geo->heads ;
 	geo->start = 0;
 	return 0;
 }
+
+struct block_device_operations mydevice_ops = {
+	.owner  = THIS_MODULE,
+	.getgeo = mydevice_getgeo
+};
+
+/*
+ * Constructor and destructor
+ */
 
 int setup_device(char* name, struct mydevice * dev, unsigned long nsect, int major_num){
 	memset(dev, 0, sizeof(struct mydevice));
@@ -84,8 +96,15 @@ int setup_device(char* name, struct mydevice * dev, unsigned long nsect, int maj
 	return 0;
 }
 
-struct block_device_operations mydevice_ops = {
-	.owner  = THIS_MODULE,
-	.getgeo = mydevice_getgeo
-};
+void clenup_device( struct mydevice* dev){
+	if ( dev->gd != NULL ) {
+		del_gendisk(dev->gd);
+		put_disk(dev->gd);
+	}
+	if ( dev->queue != NULL ) {
+		blk_cleanup_queue(dev->queue);
+	}
+	if ( dev->data != NULL )
+		vfree(dev->data);
+}
 
