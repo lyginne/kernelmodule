@@ -1,6 +1,10 @@
 #include <linux/kernel.h> 		/* printk() */
-#include <linux/errno.h>		/* error codes*/
+#include <linux/errno.h>		/* error codes */
 #include <linux/hdreg.h>		/* hd_geometry */
+#include <linux/fs.h>			/* block_device, block_device_perations structs */
+#include <linux/blkdev.h>		/* request_queue struct, blk_*() */
+#include <linux/genhd.h>		/* gendisc */
+#include <linux/vmalloc.h>		/* vmalloc(), vfree() */
 
 #include "mymodule_device_struct.h"
 #include "mymodule_device.h"
@@ -17,7 +21,7 @@ static void mydevice_transfer(struct mydevice *dev, sector_t sector, unsigned lo
 	unsigned long nbytes = nsect * hardsect_size;
 
 	if ((offset + nbytes) > dev->size) {
-		printk (KERN_NOTICE "sbd: Beyond-end write (%ld %ld)\n", offset, nbytes);
+		printk (KERN_NOTICE "mydevice: Beyond-end write (%ld %ld)\n", offset, nbytes);
 		return;
 	}
 	if (write)
@@ -33,7 +37,7 @@ static void mydevice_request(struct request_queue *q) {
 	while (req != NULL) {
 		struct mydevice *dev = req->rq_disk->private_data;
 		if ((req->cmd_type != REQ_TYPE_FS)) {
-			printk (KERN_NOTICE "Skip non-CMD request\n");
+			printk (KERN_NOTICE "Skip non-FS request\n");
 			__blk_end_request_all(req, -EIO);
 			continue;
 		}
@@ -75,6 +79,7 @@ int setup_device(char* name, struct mydevice * dev, unsigned long nsect, int maj
 	dev->queue = blk_init_queue(mydevice_request, &dev->lock);
 	if(dev->queue == NULL){
 		vfree(dev->data);
+		printk(KERN_ALERT "can't init queue");
 		return 1; //TODO proper error
 	}
 	blk_queue_logical_block_size(dev->queue,hardsect_size);
@@ -83,6 +88,7 @@ int setup_device(char* name, struct mydevice * dev, unsigned long nsect, int maj
 	dev->gd = alloc_disk(16); //TODO proper minors
 	if (dev->gd == NULL){
 		vfree(dev->data);
+		printk(KERN_ALERT "can't allocate disk");
 		return 1; // TODO proper error
 	}
 	dev->gd->major = major_num;
