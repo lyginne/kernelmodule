@@ -19,7 +19,7 @@ static int major_num=0;
 static int nsectors=204800;
 static struct kobject* kobj;
 
-static int userCreating=1;
+static int userCreating=0;
 module_param(userCreating, int, 0);
 
 static struct mydevice *Device = NULL;
