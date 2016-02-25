@@ -19,10 +19,30 @@ static int major_num=0;
 static int nsectors=204800;
 static struct kobject* kobj;
 
-static int userCreating=0;
+static int userCreating=1;
 module_param(userCreating, int, 0);
 
 static struct mydevice *Device = NULL;
+
+static void device_init(void);
+
+static ssize_t deviceinfo_store(struct kobject *local_kobj, struct kobj_attribute *attr, const char *buf, size_t count){
+	//using function just as a trigger, buffer containment is ignored
+	if(userCreating == 1 && Device == NULL){
+		device_init();
+	}
+	return count;
+}
+
+static struct kobj_attribute mydriver_deviceinfo_attr= __ATTR(deviceinfo, 0666, NULL, deviceinfo_store);
+static struct attribute *attrs[] = {
+    &mydriver_deviceinfo_attr.attr,
+    NULL, //NULL termilation for list
+};
+
+static struct attribute_group mydriver_attrs = {
+    .attrs = attrs,
+};
 
 static void device_init(void){
 	int res;
@@ -49,13 +69,16 @@ static void device_exit(void){
 }
 
 static void driver_kobject_init(const char* name){
+	int retval=0;
 	kobj=kobject_create_and_add("mydriver", kernel_kobj); //parent is not proper, change it when figure out the proper one
 	if(kobj){
-		printk(KERN_WARNING "myblockdevice: kobj is null\n");
+		retval=sysfs_create_group(kobj, &mydriver_attrs);
+		if(!retval){
+			printk(KERN_ALERT "myblockdevice: can't create driver's attributes \n");
+		}
+		return;
 	}
-	else{
-		printk(KERN_WARNING "myblockdevice: kobj is not null\n");
-	}
+	printk(KERN_ALERT "myblockdevice: can't create driver's kobj\n");
 }
 
 static void driver_kobject_exit(void){
