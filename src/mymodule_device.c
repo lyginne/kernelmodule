@@ -5,6 +5,7 @@
 #include <linux/blkdev.h>		/* request_queue struct, blk_*() */
 #include <linux/genhd.h>		/* gendisc */
 #include <linux/vmalloc.h>		/* vmalloc(), vfree() */
+#include <linux/kobject.h>
 
 #include "mymodule_device_struct.h"
 #include "mymodule_device.h"
@@ -72,14 +73,14 @@ int setup_device(char* name, struct mydevice * dev, unsigned long nsect, int maj
 	dev->size = nsect*hardsect_size;
 	dev->data = vmalloc(dev->size);
 	if (dev->data == NULL){
-		printk(KERN_ALERT "can't allocate memory for data");
+		printk(KERN_ALERT "can't allocate memory for data\n");
 		return -ENOMEM;
 	}
 	spin_lock_init(&dev->lock);
 	dev->queue = blk_init_queue(mydevice_request, &dev->lock);
 	if(dev->queue == NULL){
 		vfree(dev->data);
-		printk(KERN_ALERT "can't init queue");
+		printk(KERN_ALERT "can't init queue\n");
 		return 1; //TODO proper error
 	}
 	blk_queue_logical_block_size(dev->queue,hardsect_size);
@@ -88,7 +89,7 @@ int setup_device(char* name, struct mydevice * dev, unsigned long nsect, int maj
 	dev->gd = alloc_disk(16); //TODO proper minors
 	if (dev->gd == NULL){
 		vfree(dev->data);
-		printk(KERN_ALERT "can't allocate disk");
+		printk(KERN_ALERT "can't allocate disk\n");
 		return 1; // TODO proper error
 	}
 	dev->gd->major = major_num;

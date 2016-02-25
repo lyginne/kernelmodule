@@ -1,4 +1,5 @@
 #include <linux/spinlock_types.h>
+#include <linux/kobject.h>
 
 #ifndef H_MYBLOCKDRIVER_DEVICE
 #define H_MYBLOCKDRIVER_DEVICE
