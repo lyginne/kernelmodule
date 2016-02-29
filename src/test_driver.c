@@ -60,18 +60,18 @@ static ssize_t driver_control_file_store(struct device_driver *driver, const cha
 	
 	command = kmalloc(count, GFP_KERNEL);
 	if(!command){
-		printk(KERN_INFO MODULE_PREFIX "can't alloc command\n");
+		printk(KERN_ALERT MODULE_PREFIX "can't alloc command\n");
 		return count;
 	}
 	name = kmalloc(count, GFP_KERNEL);//TODO check name for overflow
 	if(!name){
-		printk(KERN_INFO MODULE_PREFIX "can't alloc name\n");
+		printk(KERN_ALERT MODULE_PREFIX "can't alloc name\n");
 		kfree(command);
 		return count;
 	}
 	retval = sscanf(buf, "%s", command);
 	if(retval!=1){
-		printk(KERN_INFO MODULE_PREFIX "can't parse command\n");
+		printk(KERN_WARN MODULE_PREFIX "can't parse command\n");
 		kfree(command);
 		kfree(name);
 		return count;
@@ -79,7 +79,7 @@ static ssize_t driver_control_file_store(struct device_driver *driver, const cha
 	if(!strcmp(command, "create")){
 		retval = sscanf(buf, "%*s %s %zu", name, &device_size_in_kbytes);
 		if(retval!=2){
-			printk(KERN_INFO MODULE_PREFIX "can't parse name or size\n");
+			printk(KERN_WARN MODULE_PREFIX "can't parse name or size\n");
 			kfree(command);
 			kfree(name);
 			return count;
@@ -90,9 +90,11 @@ static ssize_t driver_control_file_store(struct device_driver *driver, const cha
 			kfree(name);
 			return count;
 		}
+		// we actualy should make some sort of collection, but not now
+		printk(KERN_WARN MODULE_PREFIX "device exist, skiping\n");
 	}
 	else{
-		printk(KERN_INFO MODULE_PREFIX "unknown command\n");
+		printk(KERN_WARN MODULE_PREFIX "unknown command\n");
 	}
 	kfree(command);
 	kfree(name);
