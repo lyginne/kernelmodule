@@ -4,6 +4,8 @@ ifneq ($(KERNELRELEASE),)
 	obj-m := mymodule.o
 	mymodule-objs := src/mymodule_device.o
 	mymodule-objs += src/mymodule_main.o
+	mymodule-objs += src/test_bus.o
+	mymodule-objs += src/test_driver.o
 
 	EXTRA_CFLAGS := -I$(src)/src/include
 

@@ -88,6 +88,7 @@ int setup_device(char* name, struct mydevice * dev, unsigned long nsect, int maj
 
 	dev->gd = alloc_disk(16); //TODO proper minors
 	if (dev->gd == NULL){
+		blk_cleanup_queue(dev->queue);
 		vfree(dev->data);
 		printk(KERN_ALERT "can't allocate disk\n");
 		return 1; // TODO proper error

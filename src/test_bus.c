@@ -13,13 +13,16 @@ int test_bus_register(void){
 	int retval=0;
 	retval = bus_register(&test_bus);
 	if (retval < 0) {
-             	printk(KERN_WARNING "sysfs: error register bus: %d\n", retval);
+		printk(KERN_WARNING "sysfs: error register bus: %d\n", retval);
 		return retval;
      	}
 	get_mydriver()->bus=&test_bus;
 	retval = test_driver_register();
-	if(!retval)
+	if(retval){
+		printk(KERN_WARNING "sysfs: driver register error");
 		return retval;
+	}
+	printk(KERN_WARNING "sysfs: bus register succed");
 	
 	return 0;
 }

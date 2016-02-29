@@ -23,13 +23,13 @@ static int __init myblockdevice_init(void){
 		printk(KERN_WARNING "myblockdevice: unable to get major number\n");
 		return -EBUSY;
 	}
-	//test_bus_register();
+	test_bus_register();
 	printk(KERN_INFO "myblockdevice registered\n");
 	return 0;
 }
 
 static void __exit myblockdevice_exit(void){
-	//test_bus_unregister();
+	test_bus_unregister();
 	unregister_blkdev(major_num, "myblockdevice");
 	printk(KERN_INFO "myblockdevice unregistered\n");
 }
