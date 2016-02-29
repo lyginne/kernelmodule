@@ -13,9 +13,12 @@
 
 static int default_device_size_in_kbytes = 102400; //100 Mb - default size
 
-static int user_creating=1;
+int user_creating=0;
+module_param(user_creating, int, 0);
+MODULE_PARM_DESC(user_creating, "flag that allows user to create devices via sysfs");
 
-static struct mydevice *device = NULL; //this should be a collection or kinda, but it's good with sufficient time
+//Это слишком тупой путь. Надо бы сделать коллекцию и все хранить в ней, а по=хорошему воспользоваться встроенной
+static struct mydevice *device = NULL;
 
 static struct device_driver this={
 	.name = "test_driver",
@@ -71,7 +74,7 @@ static ssize_t driver_control_file_store(struct device_driver *driver, const cha
 	}
 	retval = sscanf(buf, "%s", command);
 	if(retval!=1){
-		printk(KERN_WARN MODULE_PREFIX "can't parse command\n");
+		printk(KERN_WARNING MODULE_PREFIX "can't parse command\n");
 		kfree(command);
 		kfree(name);
 		return count;
@@ -79,7 +82,7 @@ static ssize_t driver_control_file_store(struct device_driver *driver, const cha
 	if(!strcmp(command, "create")){
 		retval = sscanf(buf, "%*s %s %zu", name, &device_size_in_kbytes);
 		if(retval!=2){
-			printk(KERN_WARN MODULE_PREFIX "can't parse name or size\n");
+			printk(KERN_WARNING MODULE_PREFIX "can't parse name or size\n");
 			kfree(command);
 			kfree(name);
 			return count;
@@ -91,10 +94,10 @@ static ssize_t driver_control_file_store(struct device_driver *driver, const cha
 			return count;
 		}
 		// we actualy should make some sort of collection, but not now
-		printk(KERN_WARN MODULE_PREFIX "device exist, skiping\n");
+		printk(KERN_WARNING MODULE_PREFIX "device exist, skiping\n");
 	}
 	else{
-		printk(KERN_WARN MODULE_PREFIX "unknown command\n");
+		printk(KERN_WARNING MODULE_PREFIX "unknown command\n");
 	}
 	kfree(command);
 	kfree(name);
